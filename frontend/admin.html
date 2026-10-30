@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus System - Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+    <script src="auth-guard.js"></script>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">C</div>
+            <div class="logo-text">
+                CAMPUS SYSTEM
+                <span>ADMIN CONTROL</span>
+            </div>
+        </div>
+
+        <div class="admin-area">
+            <div class="user-badge">
+                <div class="avatar">A</div>
+                <span id="adminName">Admin</span>
+            </div>
+            <button id="logoutBtn" class="logout-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                Logout
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <nav>
+                <a href="#" class="menu active" data-page="dashboard">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Dashboard
+                </a>
+
+                <a href="#" class="menu" data-page="spaces">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    Manage Spaces
+                </a>
+
+                <a href="#" class="menu" data-page="faculty">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Faculty Management
+                </a>
+
+                <a href="#" class="menu" data-page="requests">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Requests
+                </a>
+
+                <a href="#" class="menu" data-page="utilization">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    Campus Utilization
+                </a>
+
+                <a href="#" class="menu" data-page="audit">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    Security & Audit Logs
+                </a>
+            </nav>
+        </aside>
+
+        <!-- CONTENT -->
+        <main class="content">
+
+            <!-- DASHBOARD PAGE -->
+            <section id="dashboardPage" class="page">
+                <div class="dashboard-hero">
+                    <div>
+                        <div class="dashboard-kicker">SYSTEM OVERVIEW</div>
+                        <h1>Campus Control Center</h1>
+                        <p class="subtitle">Monitor spaces, track requests, and manage block availability in real time.</p>
+                    </div>
+                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                        <button type="button" class="primary-btn" onclick="navigateToPage('schedule')" style="display:inline-flex; align-items:center; gap:8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            Utilization Schedule
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card stat-total">
+                        <div class="stat-icon">🏢</div>
+                        <div class="stat-content">
+                            <span>Total Spaces</span>
+                            <strong id="dashboardTotalSpaces">0</strong>
+                            <small>Across campus blocks</small>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-available">
+                        <div class="stat-icon">✓</div>
+                        <div class="stat-content">
+                            <span>Available Spaces</span>
+                            <strong id="dashboardAvailable">0</strong>
+                            <small id="dashboardAvailableText">Ready for allocation</small>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-unavailable">
+                        <div class="stat-icon">🔒</div>
+                        <div class="stat-content">
+                            <span>Currently Booked</span>
+                            <strong id="dashboardUnavailable">0</strong>
+                            <small>Unavailable rooms</small>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-pending">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-content">
+                            <span>Pending Requests</span>
+                            <strong id="dashboardPending">0</strong>
+                            <small>Requires admin action</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-section-head">
+                    <div>
+                        <h2>Space Distribution</h2>
+                        <p>Total facilities grouped by type</p>
+                    </div>
+                </div>
+
+                <div class="type-summary-grid">
+                    <div class="type-summary-card">
+                        <div class="type-summary-icon cr">CR</div>
+                        <div class="type-summary-info">
+                            <span>Classrooms</span>
+                            <strong id="dashboardClassrooms">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="type-summary-card">
+                        <div class="type-summary-icon sh">SH</div>
+                        <div class="type-summary-info">
+                            <span>Seminar Halls</span>
+                            <strong id="dashboardSeminarHalls">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="type-summary-card">
+                        <div class="type-summary-icon lab">LAB</div>
+                        <div class="type-summary-info">
+                            <span>Laboratories</span>
+                            <strong id="dashboardLabs">0</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-section-head blocks-heading">
+                    <div>
+                        <h2>Campus Blocks Overview</h2>
+                        <p>Dynamic block distribution loaded from database.</p>
+                    </div>
+                    <span class="block-count-badge" id="dashboardBlockCount">0 Blocks</span>
+                </div>
+
+                <div class="blocks-grid" id="blocksGrid"></div>
+            </section>
+
+            <!-- MANAGE SPACES PAGE -->
+            <section id="spacesPage" class="page" style="display:none;">
+                <div class="page-heading">
+                    <div>
+                        <h1>Manage Spaces</h1>
+                        <p class="subtitle">Add, edit, or configure classrooms, seminar halls, and labs.</p>
+                    </div>
+                    <button class="primary-btn" id="addSpaceBtn">
+                        + Add Space
+                    </button>
+                </div>
+
+                <div class="filters">
+                    <select id="spaceBlockFilter">
+                        <option value="ALL">All Blocks</option>
+                    </select>
+
+                    <select id="spaceTypeFilter">
+                        <option value="ALL">All Types</option>
+                        <option value="Classroom">Classroom</option>
+                        <option value="Seminar Hall">Seminar Hall</option>
+                        <option value="Lab">Lab</option>
+                    </select>
+
+                    <select id="spaceStatusFilter">
+                        <option value="ALL">All Status</option>
+                        <option value="Available">Available</option>
+                        <option value="Unavailable">Unavailable / Maintenance</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+
+                <div class="table-box">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Space Name</th>
+                                <th>Block</th>
+                                <th>Type</th>
+                                <th>Capacity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="spaceTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- REQUESTS PAGE -->
+            <section id="requestsPage" class="page" style="display:none;">
+                <div class="page-heading">
+                    <div>
+                        <h1>Request Management</h1>
+                        <p class="subtitle">Review, approve, reject, or manage faculty space requests.</p>
+                    </div>
+                    <button class="primary-btn" id="createRequestBtn">
+                        + Create Request
+                    </button>
+                </div>
+
+                <div class="request-stats">
+                    <div class="small-stat total">
+                        <span>Total Requests</span>
+                        <strong id="totalRequests">0</strong>
+                    </div>
+                    <div class="small-stat pending">
+                        <span>Pending</span>
+                        <strong id="pendingRequests">0</strong>
+                    </div>
+                    <div class="small-stat approved">
+                        <span>Approved</span>
+                        <strong id="approvedRequests">0</strong>
+                    </div>
+                    <div class="small-stat rejected">
+                        <span>Rejected</span>
+                        <strong id="rejectedRequests">0</strong>
+                    </div>
+                </div>
+
+                <div class="filters">
+                    <input type="text" id="requestSearch" placeholder="Search by faculty, space or purpose...">
+
+                    <select id="requestStatusFilter">
+                        <option value="ALL">All Status</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="APPROVED">Approved</option>
+                        <option value="REJECTED">Rejected</option>
+                    </select>
+
+                    <select id="requestBlockFilter">
+                        <option value="ALL">All Blocks</option>
+                    </select>
+                </div>
+
+                <div class="table-box">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Faculty</th>
+                                <th>Space</th>
+                                <th>Block</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Capacity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requestTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- CAMPUS UTILIZATION & SCHEDULING PAGE -->
+            <section id="utilizationPage" class="page" style="display:none;">
+                <div class="page-heading">
+                    <div>
+                        <h1>Campus Utilization & Scheduling</h1>
+                        <p class="subtitle">System-wide occupancy analytics, room allocation optimization, and facility utilization schedule.</p>
+                    </div>
+                </div>
+
+                <!-- SUB-TABS NAVIGATION -->
+                <div class="util-subtabs-nav">
+                    <button type="button" class="util-subtab-btn active" data-subtab="overview">
+                        📊 Overview & Space Optimization
+                    </button>
+                    <button type="button" class="util-subtab-btn" data-subtab="schedule">
+                        📅 Classroom & Facility Schedule
+                    </button>
+                </div>
+
+                <!-- SUBTAB 1: OVERVIEW & OPTIMIZATION -->
+                <div id="utilOverviewTabContent" class="util-subtab-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span>Total Spaces</span>
+                            <strong id="utilTotal">0</strong>
+                        </div>
+                        <div class="stat-card">
+                            <span>Available Spaces</span>
+                            <strong id="utilAvailable">0</strong>
+                        </div>
+                        <div class="stat-card">
+                            <span>Booked Spaces</span>
+                            <strong id="utilUnavailable">0</strong>
+                        </div>
+                        <div class="stat-card highlight">
+                            <span>Overall Utilization</span>
+                            <strong id="utilPercentage">0%</strong>
+                        </div>
+                    </div>
+
+                    <!-- OPTIMIZATION INSIGHT BANNER -->
+                    <div class="optimization-alert-card" style="margin-top:24px;">
+                        <div class="optimization-header">
+                            <div class="opt-icon">⚡</div>
+                            <div>
+                                <h3>Space Optimization Alert</h3>
+                                <p id="adminUnderutilizedCountText">0 Underutilized Spaces Detected</p>
+                            </div>
+                        </div>
+                        <p class="opt-desc">Rooms highlighted with an amber border are currently underutilized (&lt;50% usage). Assign upcoming faculty requests to these spaces to optimize campus scheduling.</p>
+                    </div>
+
+                    <div class="dashboard-section-head" style="margin-top:32px;">
+                        <div>
+                            <h2>Utilization by Space Type</h2>
+                            <p>Classrooms, Seminar Halls, and Laboratories usage</p>
+                        </div>
+                    </div>
+                    <div id="typeGrid" class="type-grid"></div>
+
+                    <div class="dashboard-section-head" style="margin-top:32px;">
+                        <div>
+                            <h2>Block-wise Utilization</h2>
+                            <p>Capacity usage broken down by campus block</p>
+                        </div>
+                    </div>
+                    <div id="blockUtilizationGrid" class="block-utilization-grid"></div>
+
+                    <!-- INDIVIDUAL SPACE UTILIZATION & OPTIMIZATION HIGHLIGHT -->
+                    <div class="dashboard-section-head space-opt-title" style="margin-top:36px;">
+                        <div>
+                            <h2>Individual Space Utilization & Optimization Highlight</h2>
+                            <p>Rooms marked <span class="badge-opt-pill">⚡ Needs Optimization</span> are low-utilized.</p>
+                        </div>
+
+                        <div class="optimization-filters">
+                            <button class="opt-filter-btn active" data-filter="ALL">All Rooms</button>
+                            <button class="opt-filter-btn opt-warn" data-filter="LOW">⚡ Needs Optimization</button>
+                            <button class="opt-filter-btn opt-mid" data-filter="MODERATE">🟡 Moderate Usage</button>
+                            <button class="opt-filter-btn opt-high" data-filter="HIGH">🟢 High Utilization</button>
+                        </div>
+                    </div>
+
+                    <div id="individualSpaceGrid" class="individual-space-grid"></div>
+                </div>
+
+                <!-- SUBTAB 2: CLASSROOM & FACILITY SCHEDULE -->
+                <div id="utilScheduleTabContent" class="util-subtab-content" style="display:none;">
+                    <div class="time-util-card">
+                        <div class="time-controls-header">
+                            <div class="time-nav-tabs">
+                                <button type="button" class="time-tab-btn active" data-timeview="daily">📅 By Date</button>
+                                <button type="button" class="time-tab-btn" data-timeview="weekly">📆 Weekly</button>
+                                <button type="button" class="time-tab-btn" data-timeview="monthly">📊 Monthly</button>
+                                <button type="button" class="time-tab-btn" data-timeview="blockwise">🏢 Block-wise Schedule</button>
+                            </div>
+
+                            <div class="time-selectors">
+                                <div id="dailyPickerGroup" class="time-selector-item">
+                                    <label for="utilDatePicker">Select Date:</label>
+                                    <input type="date" id="utilDatePicker">
+                                </div>
+
+                                <div id="weeklyPickerGroup" class="time-selector-item" style="display:none;">
+                                    <label for="utilWeekPicker">Select Week:</label>
+                                    <input type="week" id="utilWeekPicker">
+                                </div>
+
+                                <div id="monthlyPickerGroup" class="time-selector-item" style="display:none;">
+                                    <label for="utilMonthPicker">Select Month:</label>
+                                    <input type="month" id="utilMonthPicker">
+                                </div>
+
+                                <div class="time-selector-item">
+                                    <label for="timeSpaceTypeFilter">Filter Type:</label>
+                                    <select id="timeSpaceTypeFilter">
+                                        <option value="ALL">All Types</option>
+                                        <option value="Classroom">Classrooms</option>
+                                        <option value="Seminar Hall">Seminar Halls</option>
+                                        <option value="Lab">Laboratories</option>
+                                    </select>
+                                </div>
+
+                                <div class="time-selector-item">
+                                    <label for="timeBlockFilter">Filter Block:</label>
+                                    <select id="timeBlockFilter">
+                                        <option value="ALL">All Blocks</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Summary Stats for Selected Timeframe -->
+                        <div class="time-stats-banner" id="timeStatsSummary"></div>
+
+                        <!-- Room Utilization Cards Grid -->
+                        <div class="time-rooms-grid" id="timeScheduleGrid"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FACULTY MANAGEMENT PAGE -->
+            <section id="facultyPage" class="page" style="display:none;">
+                <div class="page-heading">
+                    <div>
+                        <h1>Faculty Management</h1>
+                        <p class="subtitle">Add, view, edit, or remove faculty accounts.</p>
+                    </div>
+                    <button class="primary-btn" id="addFacultyBtn">
+                        + Add Faculty
+                    </button>
+                </div>
+
+                <div class="filters">
+                    <input type="text" id="facultySearch" placeholder="Search by name or email...">
+                </div>
+
+                <div class="table-box">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Faculty Name</th>
+                                <th>Email Address</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="facultyTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECURITY & AUDIT LOGS PAGE -->
+            <section id="auditPage" class="page" style="display:none;">
+                <div class="page-heading">
+                    <div>
+                        <h1>Database Security & Audit Logs</h1>
+                        <p class="subtitle">Immutable audit trail of authentication events, user operations, and database modifications.</p>
+                    </div>
+                    <button class="primary-btn" id="refreshAuditBtn" onclick="loadAuditLogs()">
+                        🔄 Refresh Logs
+                    </button>
+                </div>
+
+                <div class="security-badges" style="display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:12px 18px; flex:1; min-width:200px;">
+                        <strong style="color:#166534; display:block; font-size:12px; letter-spacing:0.5px;">🔒 DATABASE USER</strong>
+                        <span style="font-size:14px; font-weight:600; color:#15803d;">campus_app_user (Least Privilege)</span>
+                    </div>
+                    <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 18px; flex:1; min-width:200px;">
+                        <strong style="color:#1e40af; display:block; font-size:12px; letter-spacing:0.5px;">🔑 PASSWORD ENCRYPTION</strong>
+                        <span style="font-size:14px; font-weight:600; color:#1d4ed8;">Bcrypt Hashing (10 Salt Rounds)</span>
+                    </div>
+                    <div style="background:#fefce8; border:1px solid #fef08a; border-radius:10px; padding:12px 18px; flex:1; min-width:200px;">
+                        <strong style="color:#854d0e; display:block; font-size:12px; letter-spacing:0.5px;">🛡️ INJECTION DEFENSE</strong>
+                        <span style="font-size:14px; font-weight:600; color:#a16207;">Parameterized SQL Statements</span>
+                    </div>
+                </div>
+
+                <div class="table-box">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Timestamp</th>
+                                <th>Action</th>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Details</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTableBody">
+                            <tr><td colspan="7" style="text-align:center;">Loading audit trail...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- BLOCK DETAILS MODAL -->
+    <div class="modal" id="blockDetailsModal">
+        <div class="modal-content block-modal">
+            <div class="modal-header">
+                <div>
+                    <h2 id="blockDetailsTitle">Block Details</h2>
+                    <p id="blockDetailsSubtitle">Campus space breakdown</p>
+                </div>
+                <button class="close-btn" id="closeBlockModal">×</button>
+            </div>
+
+            <div class="type-summary">
+                <div class="type-card">
+                    <strong id="blockCRCount">0</strong>
+                    <span>CR</span>
+                    <small>Classrooms</small>
+                </div>
+                <div class="type-card">
+                    <strong id="blockSHCount">0</strong>
+                    <span>SH</span>
+                    <small>Seminar Halls</small>
+                </div>
+                <div class="type-card">
+                    <strong id="blockLABCount">0</strong>
+                    <span>LAB</span>
+                    <small>Laboratories</small>
+                </div>
+            </div>
+
+            <div class="table-box">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Space</th>
+                            <th>Type</th>
+                            <th>Capacity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="blockSpaceTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SPACE MODAL -->
+    <div class="modal" id="spaceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="spaceModalTitle">Add New Space</h2>
+                <button class="close-btn" id="closeSpaceModal">×</button>
+            </div>
+
+            <form id="spaceForm">
+                <input type="hidden" id="spaceId">
+
+                <div class="form-group">
+                    <label>Space Name</label>
+                    <input type="text" id="spaceName" placeholder="Example: CR-A101" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Block</label>
+                    <select id="spaceBlock" required>
+                        <option value="">Select Block</option>
+                    </select>
+                    <button type="button" class="secondary-btn btn-sm" id="addNewBlockBtn" style="margin-top:8px;">+ Add New Block</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Space Type</label>
+                    <select id="spaceType" required>
+                        <option value="">Select Type</option>
+                        <option value="Classroom">Classroom</option>
+                        <option value="Seminar Hall">Seminar Hall</option>
+                        <option value="Lab">Lab</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Capacity</label>
+                    <input type="number" id="spaceCapacity" min="1" placeholder="e.g. 50" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Space Status</label>
+                    <select id="spaceStatus" required>
+                        <option value="Available">Available</option>
+                        <option value="Unavailable">Unavailable / Maintenance</option>
+                        <option value="Inactive">Inactive (Deactivated)</option>
+                    </select>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="secondary-btn" id="cancelSpaceBtn">Cancel</button>
+                    <button type="submit" class="primary-btn">Save Space</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- REQUEST MODAL -->
+    <div class="modal" id="requestModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="requestModalTitle">Create Request</h2>
+                <button class="close-btn" id="closeRequestModal">×</button>
+            </div>
+
+            <form id="requestForm">
+                <input type="hidden" id="requestId">
+
+                <div class="form-group">
+                    <label>Faculty Member</label>
+                    <select id="facultySelect" required>
+                        <option value="">Select Faculty</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Block</label>
+                    <select id="requestBlock" required>
+                        <option value="">Select Block</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Space Name</label>
+                    <input type="text" id="requestSpace" placeholder="Example: CR-A101" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="requestDate" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="time" id="startTime" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>End Time</label>
+                        <input type="time" id="endTime" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Required Capacity</label>
+                    <input type="number" id="requestCapacity" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Purpose</label>
+                    <textarea id="requestPurpose" placeholder="Enter purpose of booking..." required></textarea>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="secondary-btn" id="cancelRequestBtn">Cancel</button>
+                    <button type="submit" class="primary-btn">Save Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- REQUEST DETAILS MODAL -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Request Details</h2>
+                <button class="close-btn" id="closeDetailsModal">×</button>
+            </div>
+            <div id="requestDetails"></div>
+        </div>
+    </div>
+
+    <!-- CONFIRMATION MODAL -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content confirm-content">
+            <div class="confirm-icon">?</div>
+            <h2 id="confirmTitle">Confirm Action</h2>
+            <p id="confirmMessage">Are you sure?</p>
+            <div class="modal-buttons">
+                <button class="secondary-btn" id="confirmCancelBtn">Cancel</button>
+                <button class="danger-btn" id="confirmOkBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD BLOCK MODAL -->
+    <div class="modal" id="newBlockModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Block</h2>
+                <button class="close-btn" id="closeNewBlockModal">×</button>
+            </div>
+            <form id="newBlockForm">
+                <div class="form-group">
+                    <label>Block Name</label>
+                    <input type="text" id="newBlockName" placeholder="Example: Block E" required>
+                    <small style="color:var(--text-muted);margin-top:6px;display:block;">The block will appear in dropdowns and will be saved when you add a space to it.</small>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="secondary-btn" id="cancelNewBlockBtn">Cancel</button>
+                    <button type="submit" class="primary-btn">Add Block</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FACULTY MODAL -->
+    <div class="modal" id="facultyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="facultyModalTitle">Add New Faculty Member</h2>
+                <button class="close-btn" id="closeFacultyModal">×</button>
+            </div>
+
+            <form id="facultyForm">
+                <input type="hidden" id="facultyId">
+
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="facultyNameInput" placeholder="e.g. Shasvin D" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="facultyEmailInput" placeholder="e.g. shasvind@campus.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label id="facultyPasswordLabel">Password</label>
+                    <input type="password" id="facultyPasswordInput" placeholder="Enter password (min. 6 characters)">
+                    <small id="facultyPasswordHelp" style="color:var(--text-muted);margin-top:4px;display:block;"></small>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="secondary-btn" id="cancelFacultyBtn">Cancel</button>
+                    <button type="submit" class="primary-btn" id="saveFacultyBtn">Save Faculty</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="toast"></div>
+
+    <script src="admin.js"></script>
+</body>
+
+</html>
