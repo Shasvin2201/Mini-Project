@@ -26,6 +26,7 @@ import {
   FlaskConical,
   Landmark,
   CalendarRange,
+  Target,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -76,6 +77,9 @@ export function CampusUtilization() {
   const [selectedDay, setSelectedDay] = useState(() => new Date().toISOString().split('T')[0]);
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
+  // Specific Space Inspector State
+  const [inspectedSpaceId, setInspectedSpaceId] = useState('');
+
   // Search & Filters for Matrix Table
   const [searchTerm, setSearchTerm] = useState('');
   const [blockFilter, setBlockFilter] = useState('ALL');
@@ -102,8 +106,14 @@ export function CampusUtilization() {
         spacesApi.getAllSpaces(),
         requestsApi.getAllRequests().catch(() => []),
       ]);
-      setSpaces(Array.isArray(spData) ? spData : []);
+      const validSpaces = Array.isArray(spData) ? spData : [];
+      setSpaces(validSpaces);
       setRequests(Array.isArray(reqData) ? reqData : []);
+
+      // Default inspected space to the first active space
+      if (validSpaces.length > 0 && !inspectedSpaceId) {
+        setInspectedSpaceId(String(validSpaces[0].id));
+      }
     } catch (err) {
       showToast('Failed to load campus utilization data', 'error');
     } finally {
@@ -128,7 +138,6 @@ export function CampusUtilization() {
         subtitle: `Date: ${selectedDay}`,
       };
     } else if (temporalMode === 'week') {
-      // 7-day window ending at selectedDay
       const d = new Date(selectedDay);
       const startD = new Date(d);
       startD.setDate(d.getDate() - 6);
@@ -140,7 +149,6 @@ export function CampusUtilization() {
         subtitle: `7-Day Range: ${startStr} to ${selectedDay}`,
       };
     } else {
-      // Month-wise
       const [year, month] = selectedMonth.split('-');
       const lastDay = new Date(Number(year), Number(month), 0).getDate();
       return {
@@ -166,7 +174,6 @@ export function CampusUtilization() {
     const bookedSpacesInPeriod = new Set(periodApprovedRequests.map((r) => Number(r.space_id)));
     let activeOccupiedCount = bookedSpacesInPeriod.size;
 
-    // If day mode matches today, consider current live unavailable spaces as active too
     const isTodaySelected = selectedDay === new Date().toISOString().split('T')[0];
     if (temporalMode === 'day' && isTodaySelected) {
       activeOccupiedCount = Math.max(activeOccupiedCount, bookedCount);
@@ -220,7 +227,62 @@ export function CampusUtilization() {
     });
   }, [activeSpaces, periodApprovedRequests, temporalMode, selectedDay]);
 
-  // ── 3. INDIVIDUAL EACH CLASSROOM, LAB, SEMINAR HALL WISE UTILIZATION ──
+  // ── 3. SPECIFIC FACILITY INSPECTOR CALCULATIONS ──
+  const inspectedSpace = useMemo(() => {
+    if (!activeSpaces.length) return null;
+    return activeSpaces.find((s) => String(s.id) === String(inspectedSpaceId)) || activeSpaces[0];
+  }, [activeSpaces, inspectedSpaceId]);
+
+  const inspectedSpaceStats = useMemo(() => {
+    if (!inspectedSpace) return null;
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const isTodaySelected = selectedDay === todayStr;
+
+    // Filter approved requests for this specific facility
+    const roomApprovedReqs = requests.filter(
+      (r) => Number(r.space_id) === Number(inspectedSpace.id) && String(r.status).toUpperCase() === 'APPROVED'
+    );
+
+    // Day-wise rate for this specific space
+    const dayReqs = roomApprovedReqs.filter((r) => r.request_date === selectedDay);
+    const dayPct = dayReqs.length > 0 || (isTodaySelected && inspectedSpace.status === 'Unavailable') ? 100 : 0;
+
+    // Week-wise rate for this specific space (7 days)
+    const weekReqs = roomApprovedReqs.filter(
+      (r) => r.request_date >= temporalRange.start && r.request_date <= temporalRange.end
+    );
+    const weekPct = Math.min(100, weekReqs.length * 25);
+
+    // Month-wise rate for this specific space
+    const monthReqs = roomApprovedReqs.filter(
+      (r) => r.request_date && r.request_date.startsWith(selectedMonth)
+    );
+    const monthPct = Math.min(100, monthReqs.length * 15);
+
+    // Filtered sessions for this space
+    const currentPeriodReqs = roomApprovedReqs.filter(
+      (r) => r.request_date >= temporalRange.start && r.request_date <= temporalRange.end
+    );
+
+    // Selected period rate
+    let activePeriodRate = dayPct;
+    if (temporalMode === 'week') activePeriodRate = weekPct;
+    if (temporalMode === 'month') activePeriodRate = monthPct;
+
+    return {
+      space: inspectedSpace,
+      activePeriodRate,
+      dayPct,
+      weekPct,
+      monthPct,
+      currentPeriodReqs,
+      totalApprovedCount: roomApprovedReqs.length,
+    };
+  }, [inspectedSpace, requests, selectedDay, selectedMonth, temporalMode, temporalRange]);
+
+  // ── 4. INDIVIDUAL EACH CLASSROOM, LAB, SEMINAR HALL WISE UTILIZATION ──
   const individualRoomMatrix = useMemo(() => {
     const isTodaySelected = selectedDay === new Date().toISOString().split('T')[0];
 
@@ -235,10 +297,8 @@ export function CampusUtilization() {
         const isUnavailableNow = isTodaySelected && space.status === 'Unavailable';
         calculatedRate = hasSessionToday || isUnavailableNow ? 100 : 0;
       } else if (temporalMode === 'week') {
-        // 7-day utilization scale (e.g., 20% per session, or 100% max)
         calculatedRate = Math.min(100, roomRequests.length * 25);
       } else {
-        // Month-wise utilization scale
         calculatedRate = Math.min(100, roomRequests.length * 15);
       }
 
@@ -351,7 +411,7 @@ export function CampusUtilization() {
             Campus Utilization Analytics
           </h1>
           <p className="text-xs sm:text-sm text-gray-400 mt-1">
-            Filter by Day, Week, and Month to view overall, classroom, lab, and seminar hall percentage metrics.
+            Analyze overall, facility-type (Classroom, Lab, Seminar Hall), and specific individual space utilization percentages.
           </p>
         </div>
 
@@ -575,6 +635,158 @@ export function CampusUtilization() {
         })}
       </div>
 
+      {/* ── 🎯 SPECIFIC FACILITY UTILIZATION INSPECTOR ── */}
+      <div className="bg-[#141B2D] border border-gray-800 rounded-2xl p-5 shadow-lg space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-800/80 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <Target className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white tracking-tight">
+                Specific Facility Utilization Inspector
+              </h3>
+              <p className="text-xs text-gray-400">
+                Choose any specific classroom, lab, or seminar hall to inspect its exact utilization percentage and schedule
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Space Dropdown Selector */}
+          <div className="w-full sm:w-80">
+            <select
+              value={inspectedSpaceId}
+              onChange={(e) => setInspectedSpaceId(e.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-semibold"
+            >
+              <optgroup label="🎓 Specific Classrooms">
+                {activeSpaces.filter((s) => s.type === 'Classroom').map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.space_name} ({s.block} • {s.capacity} seats)
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="🔬 Specific Laboratories">
+                {activeSpaces.filter((s) => s.type === 'Lab').map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.space_name} ({s.block} • {s.capacity} seats)
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="🏛️ Specific Seminar Halls">
+                {activeSpaces.filter((s) => s.type === 'Seminar Hall').map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.space_name} ({s.block} • {s.capacity} seats)
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        {inspectedSpaceStats && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-1">
+            {/* Specific Space Identity Card */}
+            <div className="p-4.5 rounded-xl bg-gradient-to-br from-[#182234] to-[#0E1422] border border-indigo-500/40 flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400">
+                      Specific {inspectedSpaceStats.space.type}
+                    </span>
+                    <h4 className="text-2xl font-black text-white mt-0.5">
+                      {inspectedSpaceStats.space.space_name}
+                    </h4>
+                    <p className="text-xs text-gray-300">
+                      {inspectedSpaceStats.space.block} • Capacity: <strong>{inspectedSpaceStats.space.capacity} Seats</strong>
+                    </p>
+                  </div>
+                  <Badge variant={inspectedSpaceStats.space.status} dot size="xs">
+                    {inspectedSpaceStats.space.status}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-gray-800 flex items-center justify-between text-xs text-gray-400">
+                <span>Active Filter Utilization:</span>
+                <strong className="text-indigo-300 text-sm font-bold font-mono">
+                  {inspectedSpaceStats.activePeriodRate}%
+                </strong>
+              </div>
+            </div>
+
+            {/* Tri-Temporal Metrics for THIS Specific Space */}
+            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Day-Wise for This Specific Space */}
+              <div className="p-3.5 rounded-xl bg-gray-900/90 border border-indigo-500/20 space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-400 font-semibold">Day Utilization</span>
+                    <span className="text-[10px] font-bold text-indigo-400">Daily</span>
+                  </div>
+                  <div className="text-2xl font-black text-white mt-1">
+                    {inspectedSpaceStats.dayPct}%
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="h-full bg-indigo-500 rounded-full"
+                      style={{ width: `${inspectedSpaceStats.dayPct}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-gray-400 block truncate">{selectedDay}</span>
+                </div>
+              </div>
+
+              {/* Week-Wise for This Specific Space */}
+              <div className="p-3.5 rounded-xl bg-gray-900/90 border border-purple-500/20 space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-400 font-semibold">Week Utilization</span>
+                    <span className="text-[10px] font-bold text-purple-400">7-Day</span>
+                  </div>
+                  <div className="text-2xl font-black text-white mt-1">
+                    {inspectedSpaceStats.weekPct}%
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="h-full bg-purple-500 rounded-full"
+                      style={{ width: `${inspectedSpaceStats.weekPct}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-gray-400 block truncate">Past 7 Days Window</span>
+                </div>
+              </div>
+
+              {/* Month-Wise for This Specific Space */}
+              <div className="p-3.5 rounded-xl bg-gray-900/90 border border-emerald-500/20 space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-400 font-semibold">Month Utilization</span>
+                    <span className="text-[10px] font-bold text-emerald-400">Monthly</span>
+                  </div>
+                  <div className="text-2xl font-black text-white mt-1">
+                    {inspectedSpaceStats.monthPct}%
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 rounded-full"
+                      style={{ width: `${inspectedSpaceStats.monthPct}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-gray-400 block truncate">{selectedMonth}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* ── TAB 1: OCCUPANCY MATRIX & HIGH-DENSITY TABLE ── */}
       {activeTab === 'matrix' && (
         <motion.div
@@ -703,17 +915,39 @@ export function CampusUtilization() {
                   Individual Space Utilization Matrix ({temporalRange.title})
                 </h3>
                 <p className="text-xs text-gray-400">
-                  Individual room-by-room utilization percentage calculated specifically for the active temporal filter: <span className="text-indigo-400 font-semibold">{temporalRange.subtitle}</span>.
+                  Individual room-by-room utilization percentage calculated specifically for: <span className="text-indigo-400 font-semibold">{temporalRange.subtitle}</span>. Click any room to inspect it in the Spotlight Card.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-400">Showing {filteredMatrix.length} spaces</span>
+              {/* Quick Facility Type Switcher Pills */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[
+                  { id: 'ALL', label: 'All Spaces' },
+                  { id: 'Classroom', label: '🎓 Classrooms' },
+                  { id: 'Lab', label: '🔬 Labs' },
+                  { id: 'Seminar Hall', label: '🏛️ Seminar Halls' },
+                ].map((pill) => (
+                  <button
+                    key={pill.id}
+                    type="button"
+                    onClick={() => {
+                      setTypeFilter(pill.id);
+                      setCurrentPage(1);
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border ${
+                      typeFilter === pill.id
+                        ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                        : 'bg-gray-800/80 text-gray-300 border-gray-700 hover:text-white'
+                    }`}
+                  >
+                    {pill.label}
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Filter Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Input
                 placeholder="Search room name or block..."
                 icon={Search}
@@ -736,19 +970,6 @@ export function CampusUtilization() {
                 <option value="Block B">Block B</option>
                 <option value="Block C">Block C</option>
                 <option value="Block D">Block D</option>
-              </Select>
-
-              <Select
-                value={typeFilter}
-                onChange={(e) => {
-                  setTypeFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-              >
-                <option value="ALL">All Facility Types</option>
-                <option value="Classroom">Classroom</option>
-                <option value="Seminar Hall">Seminar Hall</option>
-                <option value="Lab">Laboratory</option>
               </Select>
 
               <Select
@@ -775,9 +996,9 @@ export function CampusUtilization() {
                     <th className="py-3 px-4">Facility Type</th>
                     <th className="py-3 px-4">Capacity</th>
                     <th className="py-3 px-4">{temporalMode.toUpperCase()} UTILIZATION %</th>
-                    <th className="py-3 px-4">Filtered Sessions</th>
+                    <th className="py-3 px-4">Period Sessions</th>
                     <th className="py-3 px-4">Live Status</th>
-                    <th className="py-3 px-4">Recommendation</th>
+                    <th className="py-3 px-4">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800/80 text-gray-200">
@@ -788,52 +1009,69 @@ export function CampusUtilization() {
                       </td>
                     </tr>
                   ) : (
-                    paginatedMatrix.map((room) => (
-                      <tr key={room.id} className="hover:bg-gray-800/30 transition-colors">
-                        <td className="py-3 px-4 font-bold text-gray-100">{room.space_name}</td>
-                        <td className="py-3 px-4 text-indigo-400 font-semibold">{room.block}</td>
-                        <td className="py-3 px-4">
-                          <Badge variant={room.type} size="xs">{room.type}</Badge>
-                        </td>
-                        <td className="py-3 px-4 text-gray-300">{room.capacity} Seats</td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-white w-9 tabular-nums">{room.rate}%</span>
-                            <div className="w-24 bg-gray-800 rounded-full h-1.5 overflow-hidden">
-                              <div
-                                className={`h-full rounded-full ${
-                                  room.rate >= 75
-                                    ? 'bg-rose-500'
-                                    : room.rate < 35
-                                    ? 'bg-amber-500'
-                                    : 'bg-emerald-500'
-                                }`}
-                                style={{ width: `${room.rate}%` }}
-                              />
+                    paginatedMatrix.map((room) => {
+                      const isSelected = String(room.id) === String(inspectedSpaceId);
+                      return (
+                        <tr
+                          key={room.id}
+                          onClick={() => setInspectedSpaceId(String(room.id))}
+                          className={`cursor-pointer transition-colors ${
+                            isSelected ? 'bg-indigo-950/40 border-l-2 border-indigo-500' : 'hover:bg-gray-800/30'
+                          }`}
+                        >
+                          <td className="py-3 px-4 font-bold text-gray-100 flex items-center gap-2">
+                            <span>{room.space_name}</span>
+                            {isSelected && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping" />
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-indigo-400 font-semibold">{room.block}</td>
+                          <td className="py-3 px-4">
+                            <Badge variant={room.type} size="xs">{room.type}</Badge>
+                          </td>
+                          <td className="py-3 px-4 text-gray-300">{room.capacity} Seats</td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-white w-9 tabular-nums">{room.rate}%</span>
+                              <div className="w-24 bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${
+                                    room.rate >= 75
+                                      ? 'bg-rose-500'
+                                      : room.rate < 35
+                                      ? 'bg-amber-500'
+                                      : 'bg-emerald-500'
+                                  }`}
+                                  style={{ width: `${room.rate}%` }}
+                                />
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-gray-300 font-mono">
-                          {room.periodSessionsCount} sessions
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge variant={room.status} size="xs" dot>{room.status}</Badge>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                              room.category === 'LOW'
-                                ? 'bg-amber-950/40 text-amber-300 border-amber-500/30'
-                                : room.category === 'HIGH'
-                                ? 'bg-rose-950/40 text-rose-300 border-rose-500/30'
-                                : 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30'
-                            }`}
-                          >
-                            {room.recommendation}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="py-3 px-4 text-gray-300 font-mono">
+                            {room.periodSessionsCount} sessions
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge variant={room.status} size="xs" dot>{room.status}</Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setInspectedSpaceId(String(room.id));
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
+                                isSelected
+                                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                                  : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700'
+                              }`}
+                            >
+                              {isSelected ? 'Inspecting' : 'Inspect'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
