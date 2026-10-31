@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   BarChart3,
   Calendar,
@@ -160,7 +160,7 @@ export function CampusUtilization() {
         sessionsCount: dayRequests.length,
         spacesCount: dayOccupiedCount,
         label: 'Day-Wise Utilization',
-        period: Today (),
+        period: `Today (${todayStr})`,
       },
       week: {
         rate: weekRate,
@@ -457,6 +457,128 @@ export function CampusUtilization() {
           </div>
         </Card>
       </div>
+
+      {/* ── Day-wise, Week-wise & Month-wise Utilization Section ── */}
+      <div className="bg-[#141B2D] border border-gray-800 rounded-2xl p-5 shadow-lg space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-800/80 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white tracking-tight">
+                Temporal Utilization Breakdown
+              </h3>
+              <p className="text-xs text-gray-400">
+                Live calculated space occupancy rates across Day-wise, Week-wise, and Month-wise intervals
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 self-start sm:self-auto">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Live Calculated
+            </span>
+          </div>
+        </div>
+
+        {/* 3 Temporal Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Day-Wise Card */}
+          <div className="p-4 rounded-xl bg-gradient-to-b from-[#182234] to-[#0E1422] border border-indigo-500/30 shadow-md space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-indigo-300 uppercase tracking-wider">Day-Wise Utilization</span>
+              <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-semibold">
+                Daily
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl font-black text-white tabular-nums">{animatedDayRate}%</span>
+                <span className="text-xs text-indigo-300 font-medium">utilized</span>
+              </div>
+              <span className="text-xs text-gray-400 font-mono">
+                {temporalStats.day.spacesCount}/{totalSpaces} Spaces
+              </span>
+            </div>
+            <div className="w-full bg-gray-800/90 rounded-full h-2 overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${temporalStats.day.rate}%` }}
+                transition={{ duration: 0.85, ease: 'easeOut' }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-gray-400 pt-1">
+              <span>{temporalStats.day.period}</span>
+              <span className="text-indigo-400 font-medium">{temporalStats.day.sessionsCount} Bookings</span>
+            </div>
+          </div>
+
+          {/* Week-Wise Card */}
+          <div className="p-4 rounded-xl bg-gradient-to-b from-[#182234] to-[#0E1422] border border-purple-500/30 shadow-md space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-purple-300 uppercase tracking-wider">Week-Wise Utilization</span>
+              <span className="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 text-[10px] font-semibold">
+                7-Day Trend
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl font-black text-white tabular-nums">{animatedWeekRate}%</span>
+                <span className="text-xs text-purple-300 font-medium">utilized</span>
+              </div>
+              <span className="text-xs text-gray-400 font-mono">
+                {temporalStats.week.spacesCount}/{totalSpaces} Spaces
+              </span>
+            </div>
+            <div className="w-full bg-gray-800/90 rounded-full h-2 overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${temporalStats.week.rate}%` }}
+                transition={{ duration: 0.85, ease: 'easeOut', delay: 0.1 }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-gray-400 pt-1">
+              <span>{temporalStats.week.period}</span>
+              <span className="text-purple-400 font-medium">{temporalStats.week.sessionsCount} Bookings</span>
+            </div>
+          </div>
+
+          {/* Month-Wise Card */}
+          <div className="p-4 rounded-xl bg-gradient-to-b from-[#182234] to-[#0E1422] border border-emerald-500/30 shadow-md space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-emerald-300 uppercase tracking-wider">Month-Wise Utilization</span>
+              <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold">
+                Monthly
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl font-black text-white tabular-nums">{animatedMonthRate}%</span>
+                <span className="text-xs text-emerald-300 font-medium">utilized</span>
+              </div>
+              <span className="text-xs text-gray-400 font-mono">
+                {temporalStats.month.spacesCount}/{totalSpaces} Spaces
+              </span>
+            </div>
+            <div className="w-full bg-gray-800/90 rounded-full h-2 overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${temporalStats.month.rate}%` }}
+                transition={{ duration: 0.85, ease: 'easeOut', delay: 0.2 }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-gray-400 pt-1">
+              <span>{temporalStats.month.period}</span>
+              <span className="text-emerald-400 font-medium">{temporalStats.month.sessionsCount} Bookings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       {/* â”€â”€ TAB 1: OCCUPANCY MATRIX & HIGH-DENSITY TABLE â”€â”€ */}
       {activeTab === 'matrix' && (
